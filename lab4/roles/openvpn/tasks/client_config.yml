@@ -1,0 +1,6 @@
+---
+- name: Создание клиентской конфигурации
+  template:
+    src: "{{ openvpn_client_config_template }}"
+    dest: "{{ openvpn_client_config_path }}/{{ openvpn_client_name }}.ovpn"
+    mode: 0600 

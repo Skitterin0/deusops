@@ -1,0 +1,36 @@
+# Глобальные настройки
+global:
+  scrape_interval: {{ prometheus_scrape_interval }}
+  scrape_timeout: {{ prometheus_scrape_timeout }}
+  evaluation_interval: {{ prometheus_evaluation_interval }}
+
+# Настройки хранения данных
+storage:
+  tsdb:
+    path: {{ prometheus_storage_path }}
+    retention: {{ prometheus_storage_retention }}
+
+# Настройки веб-сервера
+web:
+  listen_address: {{ prometheus_web_listen_address }}
+
+# Конфигурация для сбора метрик
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+{% if prometheus_targets %}
+  - job_name: 'spring-boot'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+{% for target in prometheus_targets %}
+      - targets: {{ target.targets | to_json }}
+{% if target.labels is defined %}
+        labels:
+{% for label, value in target.labels.items() %}
+          {{ label }}: "{{ value }}"
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %} 

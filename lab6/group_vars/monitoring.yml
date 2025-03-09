@@ -1,0 +1,48 @@
+---
+# Конфигурация Prometheus
+prometheus_web_listen_address: "0.0.0.0:9090"
+prometheus_storage_retention: "30d"
+prometheus_targets:
+  - targets:
+      - "app:8080"
+    labels:
+      env: production
+      job: spring-boot
+
+# Конфигурация Grafana
+grafana_security:
+  admin_user: admin
+  admin_password: admin
+grafana_datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://localhost:9090
+    isDefault: true
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://localhost:3100
+    isDefault: false
+
+# Дашборды Grafana
+grafana_dashboards:
+  - dashboard_id: 11378
+    revision_id: 9
+    datasource: Prometheus
+  - dashboard_id: 4701
+    revision_id: 4
+    datasource: Prometheus
+
+# Настройка оповещений через email
+grafana_smtp:
+  enabled: true
+  host: smtp.gmail.com:587
+  user: alerting@example.com
+  password: strongpassword
+  from_address: alerting@example.com
+  from_name: Grafana Alert
+
+# Конфигурация Loki
+loki_config_dir: /etc/loki
+loki_listen_address: "0.0.0.0:3100" 

@@ -1,0 +1,18 @@
+server {
+    listen {{ item.listen | default('80') }};
+    server_name {{ item.server_name }};
+
+{% if item.return is defined %}
+    return {{ item.return }};
+{% else %}
+    access_log {{ item.access_log | default('/var/log/nginx/access.log') }};
+    error_log {{ item.error_log | default('/var/log/nginx/error.log') }};
+
+    root {{ item.root | default('/var/www/html') }};
+    index {{ item.index | default('index.html index.htm') }};
+
+{% if item.extra_parameters is defined %}
+    {{ item.extra_parameters | indent(4) }}
+{% endif %}
+{% endif %}
+} 

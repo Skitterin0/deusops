@@ -1,0 +1,16 @@
+---
+- name: Установка OpenVPN и необходимых пакетов
+  apt:
+    name:
+      - openvpn
+      - easy-rsa
+      - openssl
+      - iptables
+      - iptables-persistent
+    state: present
+
+- name: Создание директории для ключей
+  file:
+    path: "{{ openvpn_key_dir }}"
+    state: directory
+    mode: 0700 

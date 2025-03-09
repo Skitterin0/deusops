@@ -1,0 +1,14 @@
+set_var EASYRSA_PKI                 "$PWD/pki"
+set_var EASYRSA_CERT_EXPIRE       {{ openvpn_cert_expire }}
+set_var EASYRSA_CA_EXPIRE         {{ openvpn_ca_expire }}
+set_var EASYRSA_CRL_DAYS          {{ openvpn_crl_days }}
+set_var EASYRSA_KEY_SIZE          {{ openvpn_key_size }}
+set_var EASYRSA_ALGO              "rsa"
+set_var EASYRSA_CURVE             "secp384r1"
+set_var EASYRSA_REQ_COUNTRY       "RU"
+set_var EASYRSA_REQ_PROVINCE      "Moscow"
+set_var EASYRSA_REQ_CITY          "Moscow"
+set_var EASYRSA_REQ_ORG           "DeusOps"
+set_var EASYRSA_REQ_EMAIL         "admin@example.com"
+set_var EASYRSA_REQ_OU            "DevOps"
+set_var EASYRSA_BATCH             "1" 

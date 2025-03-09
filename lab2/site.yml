@@ -1,0 +1,15 @@
+---
+- name: Установка Docker и запуск приложения
+  hosts: app
+  become: true
+  roles:
+    - docker
+
+  tasks:
+    - name: Pull and run nginx container
+      docker_container:
+        name: deusops-app
+        image: nginx:latest
+        state: started
+        ports:
+          - "80:80" 

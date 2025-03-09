@@ -1,0 +1,21 @@
+---
+- name: Установка Docker и запуск Django-приложения
+  hosts: app
+  become: true
+  roles:
+    - docker
+  tasks:
+    - name: Pull и запуск контейнера с Django-приложением
+      docker_container:
+        name: django-app
+        image: timurbabs/django:latest
+        state: started
+        ports:
+          - "8000:8000"
+        restart_policy: always
+
+- name: Установка и настройка Nginx
+  hosts: web
+  become: true
+  roles:
+    - nginx 

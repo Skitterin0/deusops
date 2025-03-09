@@ -1,0 +1,17 @@
+---
+- name: Add SSH key to all hosts
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Create .ssh directory
+      file:
+        path: /home/vagrant/.ssh
+        state: directory
+        mode: '0700'
+      
+    - name: Add SSH key
+      lineinfile:
+        path: /home/vagrant/.ssh/authorized_keys
+        line: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDSeQlGcv4GIPqqy4daU3JSqpmPXx1FYsWFlEseYY78WUlP8QgsWWSJy5kVFotA5AuPOxcDBj0k5LbsdKjcWWobaopCyG6gLZTneD0Rbxrx2jfOEK2UCAGCZ5x4YPj/ggcmopQk3aBHIGZTKQMZJG+knCRI4gl3nX1twnpVrHBTmagrcI+jp5FIVeMEUpIHYBM0yYO+Zy8g+W7nXeEK0Btfeim62YAx+1LgYzoeOtLeo51ITwKFz32BPbPRUnlJ3NBKK+Hj0mb5n73Y2prcfUg/VeBgtubxzT1RYtiapeFFmcqiVCdlep74XsKqpLr+iek2GXS2ahyiwDOHNHknMmeuo8gGKMMxe25mahVEWHMDXrResodsnJPerMAVBZC5G2S+XeTGHQnQSBc3+uFiE9v44WBys4bE7YeOsPSncp0R2HjqauRdeySPwP6/Twzft43XJb1BeG4FerDlgNDm+aqrfoZlkgmB/8Pb5rAyqWOKVwNL9JpXwPH/HepZSoakhnpb/+FyFIwbY3FBrv3/kJYzzMKbbuo//P4Piht/SQCg9IlnP5z3FizjlG0NDMtM2jYU0uEMIMkaYqVUPIBCIw7mXeQR6Sa+hmS0NKTe756jbt4EQwoD+fIF2EYHss2qx7EuMVDjdhQ6fxLfK/xFxC5pgLoGMTwHomgYL5ybgakSew== dan19@SayNyaOrDie'
+        create: yes
+        mode: '0600' 

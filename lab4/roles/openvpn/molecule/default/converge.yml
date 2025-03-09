@@ -1,0 +1,15 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  tasks:
+    - name: "Include openvpn role"
+      include_role:
+        name: "openvpn"
+      vars:
+        openvpn_port: 1194
+        openvpn_proto: udp
+        openvpn_network: "10.8.0.0"
+        openvpn_netmask: "255.255.255.0"
+        openvpn_client_name: "client"
+        openvpn_server_hostname: "{{ ansible_default_ipv4.address }}" 

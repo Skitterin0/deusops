@@ -1,0 +1,27 @@
+---
+- name: Deploy application
+  hosts: app
+  become: true
+  tasks:
+    - name: Install git
+      apt:
+        name: git
+        state: present
+
+    - name: Clone the repository
+      git:
+        repo: https://github.com/boxfuse/boxfuse-sample-java-war-hello.git
+        dest: /opt/app
+        clone: yes
+        update: yes
+
+    - name: Build and run Docker container
+      docker_container:
+        name: java-app
+        image: tomcat:9.0
+        state: started
+        restart_policy: always
+        ports:
+          - "8080:8080"
+        volumes:
+          - /opt/app/target/hello-1.0.war:/usr/local/tomcat/webapps/hello.war 

@@ -1,0 +1,22 @@
+---
+# handlers file for openvpn
+
+- name: restart openvpn
+  systemd:
+    name: openvpn@server
+    state: restarted
+    daemon_reload: yes
+    enabled: yes
+  when: ansible_virtualization_type != 'docker'
+
+- name: restart openvpn
+  block:
+    - name: Kill existing OpenVPN process
+      command: killall openvpn
+      when: openvpn_check.rc == 0
+      ignore_errors: yes
+      
+    - name: Start OpenVPN server
+      command:
+        cmd: openvpn --config {{ openvpn_server_config_dir }}/server.conf --daemon
+  when: ansible_virtualization_type == 'docker' 

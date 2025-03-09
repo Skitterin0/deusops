@@ -1,0 +1,58 @@
+---
+- name: Установка Nginx
+  apt:
+    name: nginx
+    state: present
+    update_cache: yes
+
+- name: Создание директории для статических файлов
+  file:
+    path: /var/www/static
+    state: directory
+    mode: '0755'
+
+- name: Создание директории для виртуальных хостов Nginx
+  file:
+    path: /etc/nginx/sites-available
+    state: directory
+    mode: '0755'
+
+- name: Создание директории для активных виртуальных хостов Nginx
+  file:
+    path: /etc/nginx/sites-enabled
+    state: directory
+    mode: '0755'
+
+- name: Создание виртуальных хостов Nginx из шаблонов
+  template:
+    src: vhost.conf.j2
+    dest: "/etc/nginx/sites-available/{{ item.filename | default(inventory_hostname ~ '.conf') }}"
+    mode: '0644'
+  loop: "{{ nginx_vhosts }}"
+  notify: restart nginx
+
+- name: Создание ссылок на активные виртуальные хосты
+  file:
+    src: "/etc/nginx/sites-available/{{ item.filename | default(inventory_hostname ~ '.conf') }}"
+    dest: "/etc/nginx/sites-enabled/{{ item.filename | default(inventory_hostname ~ '.conf') }}"
+    state: link
+  loop: "{{ nginx_vhosts }}"
+  notify: restart nginx
+
+- name: Удаление стандартной конфигурации
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: restart nginx
+
+- name: Проверка конфигурации Nginx
+  command: nginx -t
+  register: nginx_config_check
+  changed_when: false
+  ignore_errors: true
+
+- name: Запуск и включение Nginx
+  service:
+    name: nginx
+    state: started
+    enabled: yes 

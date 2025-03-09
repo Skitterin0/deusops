@@ -1,0 +1,13 @@
+---
+# Настройки виртуальных хостов по умолчанию
+nginx_vhosts: []
+
+# Настройки сервера
+nginx_worker_processes: auto
+nginx_worker_connections: 1024
+nginx_client_max_body_size: "64m"
+nginx_keepalive_timeout: 65
+
+# Настройки логов
+nginx_access_log: "/var/log/nginx/access.log"
+nginx_error_log: "/var/log/nginx/error.log" 

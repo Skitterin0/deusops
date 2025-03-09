@@ -1,0 +1,16 @@
+---
+# Настройки Docker
+docker_users:
+  - "{{ ansible_user }}"
+
+# Настройки приложения
+app_name: spring-boot-demo
+app_repository: https://github.com/grafana/spring-boot-demo.git
+app_version: main
+app_port: 8080
+app_container_image: spring-boot-demo:latest
+
+# Дополнительные переменные среды для приложения
+app_environment:
+  JAVA_OPTS: "-Xms512m -Xmx1024m"
+  SPRING_PROFILES_ACTIVE: "prod" 

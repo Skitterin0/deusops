@@ -1,0 +1,24 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Проверка установки Docker
+      command: docker --version
+      register: docker_version
+      changed_when: false
+      failed_when: docker_version.rc != 0
+
+    - name: Проверка статуса сервиса Docker
+      command: systemctl is-active docker
+      register: docker_status
+      changed_when: false
+      failed_when: docker_status.stdout != 'active'
+
+    - name: Проверка возможности запуска контейнера
+      docker_container:
+        name: test-container
+        image: hello-world
+        state: started
+      register: docker_container
+      failed_when: docker_container is failed 

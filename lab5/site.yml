@@ -1,0 +1,6 @@
+---
+- name: Установка и настройка PostgreSQL
+  hosts: db
+  become: true
+  roles:
+    - postgresql 

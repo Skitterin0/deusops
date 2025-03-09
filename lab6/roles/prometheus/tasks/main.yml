@@ -1,0 +1,93 @@
+---
+- name: Создание пользователя prometheus
+  user:
+    name: prometheus
+    system: yes
+    shell: /bin/false
+    home: /etc/prometheus
+    create_home: yes
+
+- name: Установка зависимостей
+  apt:
+    name:
+      - wget
+      - unzip
+    state: present
+
+- name: Скачивание архива Prometheus
+  get_url:
+    url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
+    dest: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
+    mode: '0644'
+
+- name: Создание директорий для Prometheus
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: '0755'
+  with_items:
+    - /etc/prometheus
+    - /etc/prometheus/consoles
+    - /etc/prometheus/console_libraries
+    - /etc/prometheus/rules
+    - /etc/prometheus/rules.d
+    - /etc/prometheus/file_sd
+    - /var/lib/prometheus
+
+- name: Распаковка архива Prometheus
+  unarchive:
+    src: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
+    dest: "/tmp"
+    remote_src: yes
+    creates: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64"
+
+- name: Копирование бинарных файлов Prometheus
+  copy:
+    src: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64/{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
+    owner: prometheus
+    group: prometheus
+    mode: '0755'
+    remote_src: yes
+  with_items:
+    - prometheus
+    - promtool
+
+- name: Копирование файлов конфигурации Prometheus
+  copy:
+    src: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64/{{ item }}"
+    dest: "/etc/prometheus/{{ item }}"
+    owner: prometheus
+    group: prometheus
+    mode: '0644'
+    remote_src: yes
+  with_items:
+    - consoles
+    - console_libraries
+
+- name: Настройка prometheus.yml
+  template:
+    src: prometheus.yml.j2
+    dest: /etc/prometheus/prometheus.yml
+    owner: prometheus
+    group: prometheus
+    mode: '0644'
+  notify: restart prometheus
+
+- name: Настройка systemd сервиса для Prometheus
+  template:
+    src: prometheus.service.j2
+    dest: /etc/systemd/system/prometheus.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart prometheus
+
+- name: Включение и запуск сервиса Prometheus
+  systemd:
+    name: prometheus
+    state: started
+    enabled: yes
+    daemon_reload: yes 

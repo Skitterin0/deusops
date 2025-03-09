@@ -1,0 +1,26 @@
+# PostgreSQL Client Authentication Configuration File
+
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+
+# Локальные подключения через Unix-сокет
+local   all             postgres                                peer
+local   all             all                                     peer
+
+# IPv4 локальные подключения
+host    all             all             127.0.0.1/32            md5
+
+# IPv6 локальные подключения
+host    all             all             ::1/128                 md5
+
+# Подключения для репликации
+local   replication     all                                     peer
+host    replication     all             127.0.0.1/32            md5
+host    replication     all             ::1/128                 md5
+
+{% if postgresql_is_master %}
+# Разрешить подключения для репликации с других серверов
+host    replication     {{ postgresql_replica_user }}    samenet                 md5
+{% endif %}
+
+# Разрешить подключения с других серверов
+host    all             all             0.0.0.0/0               md5 

@@ -1,0 +1,16 @@
+[Unit]
+Description=Prometheus - Monitoring system and time series database
+Documentation=https://prometheus.io/docs/introduction/overview/
+After=network-online.target
+
+[Service]
+User=prometheus
+Group=prometheus
+ExecStart=/usr/local/bin/prometheus \
+    --config.file=/etc/prometheus/prometheus.yml \
+    --storage.tsdb.path={{ prometheus_storage_path }} \
+    --storage.tsdb.retention.time={{ prometheus_storage_retention }}
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target 

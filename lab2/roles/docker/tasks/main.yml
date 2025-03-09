@@ -1,0 +1,61 @@
+---
+- name: Install required system packages
+  apt:
+    pkg: "{{ docker_required_packages }}"
+    state: present
+    update_cache: yes
+
+- name: Add Docker GPG apt Key
+  apt_key:
+    url: "{{ docker_gpg_key_url }}"
+    state: present
+
+- name: Add Docker Repository
+  apt_repository:
+    repo: "{{ docker_repo_url }}"
+    state: present
+
+- name: Update apt and install docker-ce
+  apt:
+    name: docker-ce
+    state: present
+    update_cache: yes
+
+- name: Install Docker Module for Python
+  pip:
+    name: docker
+
+- name: Ensure docker service is running
+  service:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Add user to docker group
+  user:
+    name: "{{ docker_user }}"
+    groups: docker
+    append: yes
+
+- name: Pull Docker image
+  docker_image:
+    name: "{{ container_image }}"
+    source: pull
+    force_source: yes
+  when: container_image is defined
+
+- name: Stop existing container
+  docker_container:
+    name: "{{ container_name }}"
+    state: absent
+  when: container_name is defined
+
+- name: Start Docker container
+  docker_container:
+    name: "{{ container_name }}"
+    image: "{{ container_image }}"
+    state: started
+    ports:
+      - "{{ container_port }}:{{ container_port }}"
+    restart_policy: always
+  when: container_name is defined and container_image is defined and container_port is defined 

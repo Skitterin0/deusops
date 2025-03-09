@@ -1,0 +1,33 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Проверка установки OpenVPN
+      package:
+        name: openvpn
+        state: present
+      check_mode: true
+      register: pkg_check
+      failed_when: pkg_check.changed
+
+    - name: Проверка наличия конфигурационного файла сервера
+      stat:
+        path: /etc/openvpn/server/server.conf
+      register: server_conf
+      failed_when: not server_conf.stat.exists
+
+    - name: Проверка наличия клиентской конфигурации
+      stat:
+        path: /etc/openvpn/client.ovpn
+      register: client_conf
+      failed_when: not client_conf.stat.exists
+
+    - name: Проверка статуса сервиса OpenVPN
+      service:
+        name: openvpn@server
+        state: started
+        enabled: yes
+      check_mode: true
+      register: service_check
+      failed_when: service_check.changed 

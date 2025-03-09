@@ -1,0 +1,20 @@
+---
+galaxy_info:
+  author: DeusOps
+  description: Роль для установки Docker на Ubuntu
+  company: DeusOps
+
+  license: MIT
+
+  min_ansible_version: 2.9
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - focal
+
+  galaxy_tags:
+    - docker
+    - container
+
+dependencies: [] 

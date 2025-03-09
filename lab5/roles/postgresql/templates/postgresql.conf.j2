@@ -1,0 +1,38 @@
+# -----------------------------
+# PostgreSQL {{ postgresql_version }} Configuration
+# -----------------------------
+
+# НАСТРОЙКИ ПОДКЛЮЧЕНИЯ
+listen_addresses = '{{ postgresql_listen_addresses }}'
+port = {{ postgresql_port }}
+max_connections = {{ postgresql_max_connections }}
+
+# НАСТРОЙКИ РЕСУРСОВ
+shared_buffers = {{ postgresql_shared_buffers }}
+work_mem = {{ postgresql_work_mem }}
+effective_cache_size = {{ postgresql_effective_cache_size }}
+
+# ДИРЕКТОРИЯ ДАННЫХ
+data_directory = '{{ postgresql_data_dir }}'
+
+# НАСТРОЙКИ ЖУРНАЛИРОВАНИЯ
+log_destination = '{{ postgresql_log_destination }}'
+logging_collector = {{ postgresql_logging_collector }}
+log_directory = '{{ postgresql_log_directory }}'
+log_filename = '{{ postgresql_log_filename }}'
+log_rotation_age = {{ postgresql_log_rotation_age }}
+log_rotation_size = {{ postgresql_log_rotation_size }}
+
+# НАСТРОЙКИ РЕПЛИКАЦИИ
+{% if postgresql_is_master %}
+# Настройки master-узла
+wal_level = replica
+max_wal_senders = 10
+wal_keep_size = 1GB
+archive_mode = on
+archive_command = 'cp %p {{ postgresql_data_dir }}/archive/%f'
+hot_standby = off
+{% else %}
+# Настройки replica-узла
+hot_standby = on
+{% endif %} 

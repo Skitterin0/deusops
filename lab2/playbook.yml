@@ -1,0 +1,6 @@
+---
+- name: Установка Docker и запуск приложения
+  hosts: app
+  become: true
+  roles:
+    - docker 

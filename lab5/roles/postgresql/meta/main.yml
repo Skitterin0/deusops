@@ -1,0 +1,22 @@
+---
+galaxy_info:
+  author: DeusOps
+  description: Роль для установки и настройки PostgreSQL с поддержкой репликации
+  company: DeusOps
+
+  license: MIT
+
+  min_ansible_version: 2.9
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - focal
+
+  galaxy_tags:
+    - postgresql
+    - database
+    - replication
+    - streaming
+
+dependencies: [] 

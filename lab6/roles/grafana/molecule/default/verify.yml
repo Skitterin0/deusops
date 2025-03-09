@@ -1,0 +1,25 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Проверка установки Grafana
+      command: dpkg-query -W -f='${Status}' grafana
+      register: grafana_check
+      changed_when: false
+      failed_when: grafana_check.stdout != "install ok installed"
+
+    - name: Проверка статуса сервиса Grafana
+      command: systemctl is-active grafana-server
+      register: grafana_status
+      changed_when: false
+      failed_when: grafana_status.stdout != 'active'
+
+    - name: Проверка доступности веб-интерфейса Grafana
+      uri:
+        url: "http://localhost:3000/api/health"
+        status_code: 200
+      register: grafana_web
+      until: grafana_web.status == 200
+      retries: 5
+      delay: 5 

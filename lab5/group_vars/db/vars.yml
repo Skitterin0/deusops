@@ -1,0 +1,24 @@
+---
+# Базовые настройки PostgreSQL
+postgresql_version: "14"
+postgresql_data_dir: "/var/lib/postgresql/14/main"
+postgresql_listen_addresses: "*"
+postgresql_port: 5432
+postgresql_max_connections: 100
+postgresql_shared_buffers: "256MB"
+
+# Настройки репликации
+postgresql_is_master: true
+postgresql_replica_user: "replicator"
+postgresql_replica_password: "secure_replication_pass"
+
+# Создание базы данных и пользователя для приложения
+postgresql_databases:
+  - name: appdb
+    owner: app_user
+
+postgresql_users:
+  - name: app_user
+    password: "secure_app_password"
+    privileges: ALL
+    database: appdb 

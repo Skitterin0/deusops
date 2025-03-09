@@ -1,0 +1,4 @@
+---
+server_name: web1
+server_ip: 192.168.56.201
+app_server: 192.168.56.203  # IP-адрес сервера app1 

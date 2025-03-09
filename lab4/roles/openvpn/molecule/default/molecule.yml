@@ -1,0 +1,23 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+platforms:
+  - name: instance
+    image: docker.io/pycontribs/ubuntu:20.04
+    pre_build_image: true
+    privileged: true
+    command: /sbin/init
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    environment:
+      ANSIBLE_USER: root
+provisioner:
+  name: ansible
+verifier:
+  name: testinfra
+  directory: ../tests/
+  additional_files_or_dirs:
+    - ../tests/*
+    - ../tests/*/* 

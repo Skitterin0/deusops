@@ -1,0 +1,31 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Проверка установки Prometheus
+      command: /usr/local/bin/prometheus --version
+      register: prometheus_version
+      changed_when: false
+      failed_when: prometheus_version.rc != 0
+
+    - name: Проверка конфигурации Prometheus
+      command: /usr/local/bin/promtool check config /etc/prometheus/prometheus.yml
+      register: prometheus_config
+      changed_when: false
+      failed_when: prometheus_config.rc != 0
+
+    - name: Проверка статуса сервиса Prometheus
+      command: systemctl is-active prometheus
+      register: prometheus_status
+      changed_when: false
+      failed_when: prometheus_status.stdout != 'active'
+
+    - name: Проверка доступности веб-интерфейса Prometheus
+      uri:
+        url: "http://localhost:9090/-/healthy"
+        status_code: 200
+      register: prometheus_web
+      until: prometheus_web.status == 200
+      retries: 5
+      delay: 5 

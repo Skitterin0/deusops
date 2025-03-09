@@ -1,0 +1,173 @@
+---
+# tasks file for openvpn
+
+- name: Install required packages
+  apt:
+    name:
+      - openvpn
+      - easy-rsa
+    state: present
+    update_cache: yes
+
+- name: Create OpenVPN configuration directory
+  file:
+    path: "{{ openvpn_server_config_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Check if certificates exist
+  stat:
+    path: "{{ item }}"
+  register: cert_files
+  with_items:
+    - "{{ openvpn_easy_rsa_dir }}/pki/ca.crt"
+    - "{{ openvpn_easy_rsa_dir }}/pki/issued/server.crt"
+    - "{{ openvpn_easy_rsa_dir }}/pki/private/server.key"
+    - "{{ openvpn_easy_rsa_dir }}/pki/dh.pem"
+    - "{{ openvpn_easy_rsa_dir }}/pki/issued/{{ openvpn_client_name }}.crt"
+    - "{{ openvpn_easy_rsa_dir }}/pki/private/{{ openvpn_client_name }}.key"
+
+- name: Remove existing easy-rsa directory
+  file:
+    path: "{{ openvpn_easy_rsa_dir }}"
+    state: absent
+  when: cert_files.results | map(attribute='stat.exists') | select('equalto', false) | list | length > 0
+
+- name: Make easy-rsa directory
+  command: make-cadir {{ openvpn_easy_rsa_dir }}
+  args:
+    creates: "{{ openvpn_easy_rsa_dir }}/vars"
+  when: cert_files.results | map(attribute='stat.exists') | select('equalto', false) | list | length > 0
+
+- name: Initialize PKI
+  command: 
+    cmd: ./easyrsa init-pki
+    chdir: "{{ openvpn_easy_rsa_dir }}"
+  args:
+    creates: "{{ openvpn_easy_rsa_dir }}/pki"
+  when: cert_files.results | map(attribute='stat.exists') | select('equalto', false) | list | length > 0
+
+- name: Build CA
+  command:
+    cmd: ./easyrsa --batch build-ca nopass
+    chdir: "{{ openvpn_easy_rsa_dir }}"
+  args:
+    creates: "{{ openvpn_easy_rsa_dir }}/pki/ca.crt"
+  when: not cert_files.results[0].stat.exists
+
+- name: Generate server key
+  command:
+    cmd: ./easyrsa --batch gen-req server nopass
+    chdir: "{{ openvpn_easy_rsa_dir }}"
+  args:
+    creates: "{{ openvpn_easy_rsa_dir }}/pki/private/server.key"
+  when: not cert_files.results[2].stat.exists
+
+- name: Sign server certificate
+  command:
+    cmd: ./easyrsa --batch sign-req server server
+    chdir: "{{ openvpn_easy_rsa_dir }}"
+  args:
+    creates: "{{ openvpn_easy_rsa_dir }}/pki/issued/server.crt"
+  when: not cert_files.results[1].stat.exists
+
+- name: Generate client key
+  command:
+    cmd: ./easyrsa --batch gen-req {{ openvpn_client_name }} nopass
+    chdir: "{{ openvpn_easy_rsa_dir }}"
+  args:
+    creates: "{{ openvpn_easy_rsa_dir }}/pki/private/{{ openvpn_client_name }}.key"
+  when: not cert_files.results[5].stat.exists
+
+- name: Sign client certificate
+  command:
+    cmd: ./easyrsa --batch sign-req client {{ openvpn_client_name }}
+    chdir: "{{ openvpn_easy_rsa_dir }}"
+  args:
+    creates: "{{ openvpn_easy_rsa_dir }}/pki/issued/{{ openvpn_client_name }}.crt"
+  when: not cert_files.results[4].stat.exists
+
+- name: Generate DH parameters
+  command:
+    cmd: ./easyrsa gen-dh
+    chdir: "{{ openvpn_easy_rsa_dir }}"
+  args:
+    creates: "{{ openvpn_easy_rsa_dir }}/pki/dh.pem"
+  when: not cert_files.results[3].stat.exists
+
+- name: Copy server certificates and keys
+  copy:
+    src: "{{ openvpn_easy_rsa_dir }}/pki/{{ item.src }}"
+    dest: "{{ openvpn_server_config_dir }}/{{ item.dest }}"
+    remote_src: yes
+    force: no
+  with_items:
+    - { src: 'ca.crt', dest: 'ca.crt' }
+    - { src: 'issued/server.crt', dest: 'server.crt' }
+    - { src: 'private/server.key', dest: 'server.key' }
+    - { src: 'dh.pem', dest: 'dh.pem' }
+
+- name: Copy client certificates and keys
+  copy:
+    src: "{{ openvpn_easy_rsa_dir }}/pki/{{ item.src }}"
+    dest: "{{ openvpn_client_config_path }}/{{ item.dest }}"
+    remote_src: yes
+    force: no
+  with_items:
+    - { src: 'ca.crt', dest: 'ca.crt' }
+    - { src: 'issued/{{ openvpn_client_name }}.crt', dest: '{{ openvpn_client_name }}.crt' }
+    - { src: 'private/{{ openvpn_client_name }}.key', dest: '{{ openvpn_client_name }}.key' }
+
+- name: Enable IP forwarding
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    sysctl_set: yes
+    state: present
+    reload: yes
+
+- name: Generate server configuration
+  template:
+    src: server.conf.j2
+    dest: "{{ openvpn_server_config_dir }}/server.conf"
+  notify: restart openvpn
+
+- name: Read CA certificate
+  slurp:
+    src: "{{ openvpn_client_config_path }}/ca.crt"
+  register: ca_cert
+  changed_when: false
+
+- name: Read client certificate
+  slurp:
+    src: "{{ openvpn_client_config_path }}/{{ openvpn_client_name }}.crt"
+  register: client_cert
+  changed_when: false
+
+- name: Read client key
+  slurp:
+    src: "{{ openvpn_client_config_path }}/{{ openvpn_client_name }}.key"
+  register: client_key
+  changed_when: false
+
+- name: Generate client configuration
+  template:
+    src: client.ovpn.j2
+    dest: "{{ openvpn_client_config_path }}/{{ openvpn_client_name }}.ovpn"
+    force: yes
+
+- name: Create OpenVPN service
+  file:
+    path: /etc/systemd/system/openvpn@server.service
+    state: link
+    src: /lib/systemd/system/openvpn@.service
+    force: yes
+  when: ansible_service_mgr == "systemd"
+
+- name: Enable and start OpenVPN service
+  systemd:
+    name: openvpn@server
+    state: started
+    enabled: yes
+    daemon_reload: yes
+  when: ansible_service_mgr == "systemd" 

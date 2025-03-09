@@ -1,0 +1,53 @@
+---
+- name: Настройка сервера мониторинга
+  hosts: monitoring
+  become: true
+  roles:
+    - docker
+    - prometheus
+    - grafana
+    - loki
+
+- name: Настройка сервера приложения
+  hosts: app
+  become: true
+  roles:
+    - docker
+  tasks:
+    - name: Создание директории для приложения
+      file:
+        path: /opt/{{ app_name }}
+        state: directory
+        mode: '0755'
+
+    - name: Клонирование репозитория с приложением
+      git:
+        repo: "{{ app_repository }}"
+        dest: /opt/{{ app_name }}
+        version: "{{ app_version }}"
+      ignore_errors: yes
+
+    - name: Создание Dockerfile для сборки приложения
+      copy:
+        dest: /opt/{{ app_name }}/Dockerfile
+        content: |
+          FROM openjdk:11-jdk
+          WORKDIR /app
+          COPY . /app
+          RUN ./gradlew build -x test
+          EXPOSE {{ app_port }}
+          CMD ["java", "-jar", "/app/build/libs/spring-boot-demo-0.0.1-SNAPSHOT.jar"]
+        mode: '0644'
+
+    - name: Создание и запуск контейнера с приложением
+      docker_container:
+        name: "{{ app_name }}"
+        image: "{{ app_container_image }}"
+        build:
+          path: /opt/{{ app_name }}
+          pull: yes
+        state: started
+        restart_policy: always
+        ports:
+          - "{{ app_port }}:{{ app_port }}"
+        env: "{{ app_environment }}" 

@@ -1,0 +1,13 @@
+---
+- name: Создание конфигурационного файла сервера
+  template:
+    src: server.conf.j2
+    dest: "{{ openvpn_base_dir }}/server.conf"
+    mode: 0644
+  notify: restart openvpn
+
+- name: Включение и запуск сервиса OpenVPN
+  service:
+    name: openvpn@server
+    state: started
+    enabled: yes 

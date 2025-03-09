@@ -1,0 +1,71 @@
+---
+- name: Копирование easy-rsa
+  command: make-cadir {{ openvpn_key_dir }}
+  args:
+    creates: "{{ openvpn_key_dir }}/vars"
+
+- name: Настройка переменных easy-rsa
+  template:
+    src: vars.j2
+    dest: "{{ openvpn_key_dir }}/vars"
+    mode: 0600
+
+- name: Инициализация PKI
+  shell: |
+    cd {{ openvpn_key_dir }} && \
+    source ./vars && \
+    ./easyrsa --batch init-pki
+  args:
+    creates: "{{ openvpn_key_dir }}/pki"
+
+- name: Создание CA
+  shell: |
+    cd {{ openvpn_key_dir }} && \
+    source ./vars && \
+    ./easyrsa --batch --req-cn="OpenVPN CA" build-ca nopass
+  args:
+    creates: "{{ openvpn_key_dir }}/pki/ca.crt"
+
+- name: Генерация сертификата сервера
+  shell: |
+    cd {{ openvpn_key_dir }} && \
+    source ./vars && \
+    ./easyrsa --batch build-server-full server nopass
+  args:
+    creates: "{{ openvpn_key_dir }}/pki/issued/server.crt"
+
+- name: Генерация сертификата клиента
+  shell: |
+    cd {{ openvpn_key_dir }} && \
+    source ./vars && \
+    ./easyrsa --batch build-client-full {{ openvpn_client_name }} nopass
+  args:
+    creates: "{{ openvpn_key_dir }}/pki/issued/{{ openvpn_client_name }}.crt"
+
+- name: Генерация Diffie-Hellman параметров
+  shell: |
+    cd {{ openvpn_key_dir }} && \
+    source ./vars && \
+    ./easyrsa --batch gen-dh
+  args:
+    creates: "{{ openvpn_key_dir }}/pki/dh.pem"
+
+- name: Генерация tls-auth ключа
+  shell: |
+    cd {{ openvpn_key_dir }} && \
+    openvpn --genkey --secret ta.key
+  args:
+    creates: "{{ openvpn_key_dir }}/ta.key"
+
+- name: Копирование сертификатов и ключей
+  copy:
+    src: "{{ openvpn_key_dir }}/{{ item.src }}"
+    dest: "{{ openvpn_base_dir }}/{{ item.dest }}"
+    remote_src: yes
+    mode: 0600
+  with_items:
+    - { src: "pki/ca.crt", dest: "ca.crt" }
+    - { src: "pki/issued/server.crt", dest: "server.crt" }
+    - { src: "pki/private/server.key", dest: "server.key" }
+    - { src: "pki/dh.pem", dest: "dh.pem" }
+    - { src: "ta.key", dest: "ta.key" } 

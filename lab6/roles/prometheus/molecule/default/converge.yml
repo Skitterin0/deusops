@@ -1,0 +1,15 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  vars:
+    prometheus_targets:
+      - targets:
+          - "localhost:8080"
+        labels:
+          env: test
+          job: test-app
+  tasks:
+    - name: "Include prometheus role"
+      include_role:
+        name: "prometheus" 
